@@ -1,0 +1,27 @@
+<html>
+    <head>
+        <title> Lotus </title>
+        <script src="https://vk.com/js/api/openapi.js?167" type="text/javascript"></script>
+        <script type="text/javascript" src="jquery-3.4.1.js"></script>
+    </head>
+
+    <body>
+        <p> Hello! </p>
+        <input type="button" onclick="VK.Auth.login(authInfo,VK.access.FRIENDS)" value="Войти">
+
+
+        <script type="text/javascript">
+            VK.init({
+              apiId: 7353037
+            });
+
+            function authInfo(response){
+                console.log(response);
+                VK.Api.call('friends.get', {user_id: response.session.user.id, fields: "bdate", v:"5.73"}, function(r) {
+                    console.log(r);
+});
+            };
+
+        </script>
+    </body>
+</html>
