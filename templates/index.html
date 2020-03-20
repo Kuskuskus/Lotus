@@ -17,11 +17,30 @@
 
             function authInfo(response){
                 console.log(response);
-                VK.Api.call('friends.get', {user_id: response.session.user.id, fields: "bdate", v:"5.73"}, function(r) {
-                    console.log(r);
-});
-            };
+                VK.Api.call('friends.get', {user_id: response.session.user.id, fields: "bdate", v:"5.73"}, function(friends) {
 
+                    fetch('http://127.0.0.1:5000/friends', {
+                        method: 'POST',
+                        body: JSON.stringify(friends),
+                        headers: {
+                         'Content-Type': 'application/json;charset=utf-8'
+                        }
+                    }) 
+                    .then(function (response) {
+                        if (response.status !== 200) {
+                            console.log(response.status);
+                            return;
+                        }
+
+                        response.json().then(function (data){
+                            console.log(data)
+                        })
+
+                    
+                    })
+                });       
+            };
+            
         </script>
     </body>
 </html>
