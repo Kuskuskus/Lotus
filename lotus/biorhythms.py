@@ -1,4 +1,5 @@
 from datetime import datetime, date
+import time
 
 CHAKRAS = dict(muladhara = 23.6884, 
                swadihshthana = 28.426125,
@@ -31,3 +32,9 @@ def chakras_compability(delta):
 #delta = bday_delta('17.11.1998', '7.10.1998')
 #print(chakras_compability(delta))
 #{'muladhara': 46, 'swadihshthana': 12, 'manipura': 53, 'anahatha': 84, 'vishuddha': 92, 'ajna': 73, 'sahasrara': 57}
+
+start = time.time()
+for i in range(100000):
+    delta = bday_delta('17.11.1998', '7.10.1998')
+    chakras_compability(delta)
+print( time.time() - start)
