@@ -1,5 +1,4 @@
 from datetime import datetime, date
-import time
 
 CHAKRAS = dict(muladhara = 23.6884, 
                swadihshthana = 28.426125,
@@ -25,16 +24,14 @@ def phase_diff (chakra, delta):
 
 def chakras_compability(delta):
     compability = dict()
+    chakras_sum = 0
     for chakra, value in CHAKRAS.items():
         compability[chakra] = phase_diff(value, delta)
+        chakras_sum += compability[chakra]
+    compability['average'] = round(chakras_sum / 7)
     return compability
 
 #delta = bday_delta('17.11.1998', '7.10.1998')
 #print(chakras_compability(delta))
-#{'muladhara': 46, 'swadihshthana': 12, 'manipura': 53, 'anahatha': 84, 'vishuddha': 92, 'ajna': 73, 'sahasrara': 57}
+#{'muladhara': 46, 'swadihshthana': 12, 'manipura': 53, 'anahatha': 84, 'vishuddha': 92, 'ajna': 73, 'sahasrara': 57, 'average': 60}
 
-start = time.time()
-for i in range(100000):
-    delta = bday_delta('17.11.1998', '7.10.1998')
-    chakras_compability(delta)
-print( time.time() - start)

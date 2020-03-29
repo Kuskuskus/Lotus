@@ -1,2 +1,4 @@
 .vscode/
 env/
+lotus/__pycache__/
+lotus.db
