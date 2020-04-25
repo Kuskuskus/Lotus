@@ -49,5 +49,4 @@ def get_horoscope(bday):
     
     except ValueError:
         return None
-
-print(get_horoscope(''))    
+        

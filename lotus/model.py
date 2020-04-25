@@ -6,7 +6,8 @@ class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     bdate = db.Column(db.String, nullable=True)
     horoscope = db.Column(db.String, nullable=True)
-    compabilities = db.relationship('Compability', backref = 'user')
+    compability_of = db.relationship('Compability', backref = 'user', foreign_keys='[Compability.user_id]')
+    compability_with = db.relationship('Compability', backref='friend', foreign_keys='[Compability.friend_id]')
 
     def __repr__(self):
         return '<User {}>'.format(self.id)
@@ -14,8 +15,8 @@ class User(db.Model):
 
 class Compability(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
-    friend_id = db.Column(db.Integer, db.ForeignKey('user.id'))
+    user_id = db.Column(db.Integer, db.ForeignKey(User.id))
+    friend_id = db.Column(db.Integer, db.ForeignKey(User.id))
     muladhara = db.Column(db.Integer, nullable = False)
     swadihshthana = db.Column(db.Integer, nullable = False)
     manipura = db.Column(db.Integer, nullable = False)

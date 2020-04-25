@@ -22,7 +22,8 @@ def phase_diff (chakra, delta):
     compability = (200 / chakra) * abs(delta % chakra - chakra / 2)
     return round(compability)
 
-def chakras_compability(delta):
+def chakras_compability(bdate1, bdate2):
+    delta = bday_delta(bdate1,bdate2)
     compability = dict()
     chakras_sum = 0
     for chakra, value in CHAKRAS.items():

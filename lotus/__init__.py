@@ -1,7 +1,9 @@
 from flask import Flask, render_template, request, jsonify, make_response
+from datetime import datetime, date
 from flask_cors import CORS
 from lotus.model import db, User, Compability
 from lotus.horoscope import get_horoscope
+from lotus.biorhythms import chakras_compability
 
 def create_app():
     app = Flask(__name__)
@@ -11,12 +13,15 @@ def create_app():
                 methods = app.config['CORS_METHODS'])
     db.init_app(app)
 
+
     @app.route('/')
     def index():
         return render_template('index.html')
 
+
     @app.route('/user', methods=['POST'])
     def get_user():
+        global user_req
         user_req = request.get_json()
         user = User.query.get(user_req['response'][0]['id'])
         if user:
@@ -35,10 +40,47 @@ def create_app():
         response = make_response(jsonify({'user authorized': user_req['response'][0]['id']}), 200)
         return response
 
+
     @app.route('/friends', methods=['POST'])
     def friends():
-        req = request.get_json()
-        response = make_response(jsonify(req), 200)
+        friends_req = request.get_json()
+        for friend in friends_req['response']['items']:
+            friend_in_db = User.query.get(friend['id'])
+            if friend_in_db:
+                if friend.get('bdate') != friend_in_db.bdate:
+                    friend_in_db.bdate = friend.get('bdate')
+            else:
+                try:
+                    datetime.strptime(friend.get('bdate'), '%d.%m.%Y') #Проверка на полную дату рождения, если всё ок записываем, если нет, обрабатываем эксепшны
+                    new_friend = User(id=friend['id'], 
+                                     bdate=friend['bdate'],
+                                     horoscope=get_horoscope(friend['bdate'])
+                                     ) 
+                    db.session.add(new_friend)
+
+                    chakras = chakras_compability(user_req['response'][0]['bdate'], friend['id'])
+                    compability = Compability(user_id=user_req['response'][0]['id'],
+                                              friend_id=friend['id'],
+                                              muladhara=chakras['muladhara'],
+                                              swadihshthana=chakras['swadihshthana'],
+                                              manipura=chakras['manipura'],
+                                              anahatha=chakras['anahatha'],
+                                              vishuddha=chakras['vishuddha'],
+                                              ajna=chakras['ajna'],
+                                              sahasrara=chakras['sahasrara'],
+                                              average=chakras['average']
+                                              )
+                    db.session.add(compability)
+                    db.session.commit()
+    
+                except (ValueError, TypeError):
+                    new_friend = User(id=friend['id'], 
+                                     bdate=None,
+                                     horoscope=None)
+                    db.session.add(new_friend)
+                    db.session.commit()
+
+        response = make_response(jsonify(friends_req), 200)
         return response
     
     return app
