@@ -22,22 +22,39 @@ def create_app():
     @app.route('/user', methods=['POST'])
     def get_user():
         global user_req
+        correct = True
         user_req = request.get_json()
         user = User.query.get(user_req['response'][0]['id'])
         if user:
             initial_bday = user.bdate
             if user_req['response'][0]['bdate'] != initial_bday:
-                user.bdate = user_req['response'][0]['bdate']
+                user.bdate = user_req['response'][0].get('bday')
+                user.horoscope = get_horoscope(user_req['response'][0].get('bday'))
                 db.session.commit()
         else:
-            user = User(id=user_req['response'][0]['id'], 
-                        bdate=user_req['response'][0]['bdate'],
-                        horoscope=get_horoscope(user_req['response'][0]['bdate'])
-                        )
-            db.session.add(user)
-            db.session.commit()
-
-        response = make_response(jsonify({'user authorized': user_req['response'][0]['id']}), 200)
+            try:
+                    datetime.strptime(user_req['response'][0].get('bdate'), '%d.%m.%Y') 
+               
+            except(ValueError, TypeError):
+                    correct = False
+            
+            if correct:
+                user = User(id=user_req['response'][0]['id'], 
+                            bdate=user_req['response'][0]['bdate'],
+                            horoscope=get_horoscope(user_req['response'][0]['bdate'])
+                            )
+                db.session.add(user)
+                db.session.commit()
+                response = make_response(jsonify({'user authorized': user_req['response'][0]['id']}), 200)
+            else:
+                user = User(id=user_req['response'][0]['id'], 
+                            bdate=None,
+                            horoscope=None
+                            )
+                db.session.add(user)
+                db.session.commit()
+                response = make_response(jsonify({'missing bdate': user_req['response'][0]['id']}), 400)
+        
         return response
 
 
@@ -45,20 +62,27 @@ def create_app():
     def friends():
         friends_req = request.get_json()
         for friend in friends_req['response']['items']:
+            correct = True
             friend_in_db = User.query.get(friend['id'])
             if friend_in_db:
                 if friend.get('bdate') != friend_in_db.bdate:
                     friend_in_db.bdate = friend.get('bdate')
+                    friend_in_db.horoscope = get_horoscope(friend.get('bdate'))
             else:
                 try:
-                    datetime.strptime(friend.get('bdate'), '%d.%m.%Y') #Проверка на полную дату рождения, если всё ок записываем, если нет, обрабатываем эксепшны
+                    datetime.strptime(friend.get('bdate'), '%d.%m.%Y') 
+               
+                except(ValueError, TypeError):
+                    correct = False
+
+                if correct:
                     new_friend = User(id=friend['id'], 
                                      bdate=friend['bdate'],
                                      horoscope=get_horoscope(friend['bdate'])
                                      ) 
                     db.session.add(new_friend)
 
-                    chakras = chakras_compability(user_req['response'][0]['bdate'], friend['id'])
+                    chakras = chakras_compability(user_req['response'][0]['bdate'], friend['bdate'])
                     compability = Compability(user_id=user_req['response'][0]['id'],
                                               friend_id=friend['id'],
                                               muladhara=chakras['muladhara'],
@@ -72,13 +96,13 @@ def create_app():
                                               )
                     db.session.add(compability)
                     db.session.commit()
-    
-                except (ValueError, TypeError):
-                    new_friend = User(id=friend['id'], 
+                else:
+                     new_friend = User(id=friend['id'], 
                                      bdate=None,
-                                     horoscope=None)
-                    db.session.add(new_friend)
-                    db.session.commit()
+                                     horoscope=None
+                                     ) 
+                     db.session.add(new_friend)
+                     db.session.commit() 
 
         response = make_response(jsonify(friends_req), 200)
         return response
