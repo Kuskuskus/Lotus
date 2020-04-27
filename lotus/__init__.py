@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, jsonify, make_response
+from flask import Flask, render_template, request, jsonify, make_response, redirect, url_for
 from datetime import datetime, date
 from flask_cors import CORS
 from lotus.model import db, User, Compability
@@ -31,6 +31,7 @@ def create_app():
                 user.bdate = user_req['response'][0].get('bday')
                 user.horoscope = get_horoscope(user_req['response'][0].get('bday'))
                 db.session.commit()
+            response = make_response(jsonify({'user authorized': user.id}), 200)
         else:
             try:
                     datetime.strptime(user_req['response'][0].get('bdate'), '%d.%m.%Y') 
@@ -60,6 +61,7 @@ def create_app():
 
     @app.route('/friends', methods=['POST'])
     def friends():
+        global friends_req
         friends_req = request.get_json()
         for friend in friends_req['response']['items']:
             correct = True
@@ -104,8 +106,11 @@ def create_app():
                      db.session.add(new_friend)
                      db.session.commit() 
 
-        response = make_response(jsonify(friends_req), 200)
-        return response
+    return redirect(url_for('rating'))
+
+    @app.route('/rating')
+    def rating():
+        return render_template('rating.html')
     
     return app
 
