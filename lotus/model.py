@@ -4,8 +4,10 @@ db = SQLAlchemy()
 
 class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String, nullable=False)
     bdate = db.Column(db.String, nullable=True)
     horoscope = db.Column(db.String, nullable=True)
+    photo = db.Column(db.String, nullable=False)
     compability_of = db.relationship('Compability', backref = 'user', foreign_keys='[Compability.user_id]')
     compability_with = db.relationship('Compability', backref='friend', foreign_keys='[Compability.friend_id]')
 

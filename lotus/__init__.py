@@ -21,16 +21,18 @@ def create_app():
 
     @app.route('/user', methods=['POST'])
     def get_user():
-        global user_req
         correct = True
         user_req = request.get_json()
         user = User.query.get(user_req['response'][0]['id'])
         if user:
-            initial_bday = user.bdate
-            if user_req['response'][0]['bdate'] != initial_bday:
-                user.bdate = user_req['response'][0].get('bday')
-                user.horoscope = get_horoscope(user_req['response'][0].get('bday'))
-                db.session.commit()
+            if user_req['response'][0]['bdate'] != user.bdate:
+                user.bdate = user_req['response'][0].get('bdate')
+                user.horoscope = get_horoscope(user_req['response'][0].get('bdate'))
+            if user_req['response'][0]['photo_50'] != user.photo:
+                user.photo = user_req['response'][0]['photo_50']
+            if user_req['response'][0]['first_name']+' '+user_req['response'][0]['last_name'] != user.name:
+                user.name = user_req['response'][0]['first_name']+' '+user_req['response'][0]['last_name']
+            db.session.commit()
             response = make_response(jsonify({'user authorized': user.id}), 200)
         else:
             try:
@@ -41,51 +43,59 @@ def create_app():
             
             if correct:
                 user = User(id=user_req['response'][0]['id'], 
+                            name=user_req['response'][0]['first_name']+' '+user_req['response'][0]['last_name'],
                             bdate=user_req['response'][0]['bdate'],
-                            horoscope=get_horoscope(user_req['response'][0]['bdate'])
+                            horoscope=get_horoscope(user_req['response'][0]['bdate']),
+                            photo=user_req['response'][0]['photo_50']
                             )
                 db.session.add(user)
                 db.session.commit()
                 response = make_response(jsonify({'user authorized': user_req['response'][0]['id']}), 200)
             else:
-                user = User(id=user_req['response'][0]['id'], 
-                            bdate=None,
-                            horoscope=None
-                            )
-                db.session.add(user)
-                db.session.commit()
                 response = make_response(jsonify({'missing bdate': user_req['response'][0]['id']}), 400)
         
         return response
 
 
-    @app.route('/friends', methods=['POST'])
+    @app.route('/friends', methods=['POST', 'GET'])
     def friends():
-        global friends_req
         friends_req = request.get_json()
+        user = User.query.get(friends_req['response']['items'][-1])
+        del friends_req['response']['items'][-1]
+
         for friend in friends_req['response']['items']:
             correct = True
             friend_in_db = User.query.get(friend['id'])
-            if friend_in_db:
-                if friend.get('bdate') != friend_in_db.bdate:
-                    friend_in_db.bdate = friend.get('bdate')
-                    friend_in_db.horoscope = get_horoscope(friend.get('bdate'))
-            else:
-                try:
-                    datetime.strptime(friend.get('bdate'), '%d.%m.%Y') 
+        
+            try:
+                datetime.strptime(friend.get('bdate'), '%d.%m.%Y') 
                
-                except(ValueError, TypeError):
-                    correct = False
+            except(ValueError, TypeError):
+                correct = False
 
-                if correct:
+            if correct:
+
+                if friend_in_db:
+                    if friend.get('bdate') != friend_in_db.bdate:
+                        friend_in_db.bdate = friend.get('bdate')
+                        friend_in_db.horoscope = get_horoscope(friend.get('bdate')) 
+                        #добавить обновление совместимости
+                    if friend['photo_50'] != friend_in_db.photo:
+                        friend_in_db.photo = friend['photo_50']  
+                    if friend['first_name']+' '+friend['last_name'] != friend_in_db.name:
+                        friend_in_db.name = friend['first_name']+' '+friend['last_name']                      
+                    db.session.commit()
+                else:
                     new_friend = User(id=friend['id'], 
-                                     bdate=friend['bdate'],
-                                     horoscope=get_horoscope(friend['bdate'])
+                                      name=friend['first_name']+' '+friend['last_name'],   
+                                      bdate=friend['bdate'],
+                                      horoscope=get_horoscope(friend['bdate']),
+                                      photo=friend['photo_50']
                                      ) 
                     db.session.add(new_friend)
 
-                    chakras = chakras_compability(user_req['response'][0]['bdate'], friend['bdate'])
-                    compability = Compability(user_id=user_req['response'][0]['id'],
+                    chakras = chakras_compability(user.bdate, friend['bdate'])
+                    compability = Compability(user_id=user.id,
                                               friend_id=friend['id'],
                                               muladhara=chakras['muladhara'],
                                               swadihshthana=chakras['swadihshthana'],
@@ -98,20 +108,14 @@ def create_app():
                                               )
                     db.session.add(compability)
                     db.session.commit()
-                else:
-                     new_friend = User(id=friend['id'], 
-                                     bdate=None,
-                                     horoscope=None
-                                     ) 
-                     db.session.add(new_friend)
-                     db.session.commit() 
+        response = make_response(jsonify(friends_req), 200)
+        return response
 
-    return redirect(url_for('rating'))
 
-    @app.route('/rating')
-    def rating():
-        return render_template('rating.html')
-    
+    @app.route('/rating/<int:user_id>')
+    def rating(user_id):
+        compabilities = Compability.query.filter_by(user_id=user_id).order_by(Compability.average.desc()).all()
+        return render_template('rating.html', compabilities=compabilities)    
     return app
 
 
