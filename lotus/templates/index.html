@@ -1,69 +1,58 @@
-<html>
+<!DOCTYPE html>
+<html lang='ru'>
     <head>
         <title> Lotus </title>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+
+        <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css" integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous">
+        <link rel="stylesheet" href="{{ url_for('static', filename='main.css') }}">
+
+        <script src="{{ url_for('static', filename='index.js') }}"></script>
         <script src="https://vk.com/js/api/openapi.js?167" type="text/javascript"></script>
+        <script src="https://code.jquery.com/jquery-3.4.1.slim.min.js" integrity="sha384-J6qa4849blE2+poT4WnyKhv5vZF5SrPo0iEjwBvKU7imGFAV0wwj1yYfoRSJoZ+n" crossorigin="anonymous"></script>
+        <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js" integrity="sha384-Q6E9RHvbIyZFJoft+2mJbHaEWldlvI9IOYy5n3zV9zzTtmI3UksdQRVvoxMfooAo" crossorigin="anonymous"></script>
+        <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/js/bootstrap.min.js" integrity="sha384-wfSDF2E50Y2D1uUdj0O3uMBJnjuUD4Ih7YwaYd1iqfktj0Uod8GCExl3Og8ifwB6" crossorigin="anonymous"></script>
+
     </head>
 
     <body>
-        <p> Hello! </p>
-        <input type="button" onclick="VK.Auth.login(authInfo,VK.access.FRIENDS)" value="Войти">
+        <header>
+            <div class="container">
+                <nav class="navbar navbar-expand-lg navbar-light">
+                    <a class="navbar-brand mx-auto" href="http://127.0.0.1:5000/">
+                        <img src="{{ url_for('static', filename='light_logo.jpg') }}" width="200" height="200">
+                    </a>
+            </div>
+        </header>    
+
+        <div class="container">
+            <div class="row">
+                <div class="col-md-12">
+                    <div class="greeting-text">
+                        <p>Привет! Это Lotus - приложение, которое показывает твою совместимость по биоритмам с друзьями ВКонтакте.
+                            Для расчета используется полная дата рождения человека. Перед тем, как начать расчёт, проверь, что
+                            у тебя указаны день, месяц и год. Учти, что тебе не отобразятся друзья, у которых указана неполная дата. </p>
+
+                        <p>
+                            Приложение сделано для развлечения. Помни, что проценты совместимости играют далеко не главную роль во взаимоотношениях
+                            двух людей. Если что-то не совпало с твоими друзьями или любимыми, не переживай. То,
+                            что вас связывает, гораздо сильнее числовых условностей. Но если с кем-то у тебя большой процент совместимости,
+                            возможно, стоит дать этому человеку шанс. 
+                        </p>
+
+                        <input type="button" class="btn btn-outline-dark btn-lg center" onclick="VK.Auth.login(authInfo,VK.access.FRIENDS)" value="Посчитать">
+
+                    </div>
+                </div>
+            </div>
+        </div>
 
 
         <script type="text/javascript">
             VK.init({
-              apiId: 7353037
-            });
-
-            function authInfo(response){
-                console.log(response)
-                VK.Api.call('users.get', {user_ids: response.session.user.id, fields: 'bdate, photo_50', v:'5.73'}, function(user){
-                    fetch('http://127.0.0.1:5000/user', {
-                        method: 'POST',
-                        body: JSON.stringify(user),
-                        headers: {
-                            'Content-Type': 'application/json;charset=utf-8'
-                        }
-                    })
-                    .then(function (user_response) {
-                        if (user_response.status !== 200) {
-                            console.log(user_response.status);
-                            return;
-                        }
-
-                        user_response.json().then(function (data){
-                            console.log(data)
-                        })
-
-                        VK.Api.call('friends.get', {user_id: response.session.user.id, fields: "bdate, photo_50", v:"5.73"}, function(friends) {
-                            user_id = response.session.user.id
-                            friends.response.items.push(user_id)
-                            fetch('http://127.0.0.1:5000/friends', {
-                                method: 'POST',
-                                body: JSON.stringify(friends),
-                                headers: {
-                                'Content-Type': 'application/json;charset=utf-8'
-                                }
-                            }) 
-
-                            .then(function (response) {
-                                if (response.status !== 200) {
-                                    console.log(response.status);
-                                    return;
-                                 }
-
-                                response.json().then(function (data){
-                                    console.log(data)
-                                    console.log('end')
-                                    window.location.href = "http://127.0.0.1:5000/rating/" + user_id;
-                                })
-                            }) 
-                    
-                        });       
-
-                    })
-                });
-            };
-            
+                apiId: 7353037
+            });        
         </script>
     </body>
 </html>

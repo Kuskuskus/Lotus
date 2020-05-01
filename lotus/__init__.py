@@ -4,6 +4,7 @@ from flask_cors import CORS
 from lotus.model import db, User, Compability
 from lotus.horoscope import get_horoscope
 from lotus.biorhythms import chakras_compability
+from lotus.get_users import sync
 
 def create_app():
     app = Flask(__name__)
@@ -62,6 +63,7 @@ def create_app():
         friends_req = request.get_json()
         user = User.query.get(friends_req['response']['items'][-1])
         del friends_req['response']['items'][-1]
+        sync(user.id,friends_req)
 
         for friend in friends_req['response']['items']:
             correct = True
@@ -79,11 +81,37 @@ def create_app():
                     if friend.get('bdate') != friend_in_db.bdate:
                         friend_in_db.bdate = friend.get('bdate')
                         friend_in_db.horoscope = get_horoscope(friend.get('bdate')) 
-                        #добавить обновление совместимости
                     if friend['photo_50'] != friend_in_db.photo:
                         friend_in_db.photo = friend['photo_50']  
                     if friend['first_name']+' '+friend['last_name'] != friend_in_db.name:
-                        friend_in_db.name = friend['first_name']+' '+friend['last_name']                      
+                        friend_in_db.name = friend['first_name']+' '+friend['last_name'] 
+
+                    compability_in_db = Compability.query.filter_by(user_id=user.id, friend_id=friend['id']).first()   
+                    if not compability_in_db:
+                        chakras = chakras_compability(user.bdate, friend['bdate'])
+                        compability = Compability(user_id=user.id,
+                                                friend_id=friend['id'],
+                                                muladhara=chakras['muladhara'],
+                                                swadihshthana=chakras['swadihshthana'],
+                                                manipura=chakras['manipura'],
+                                                anahatha=chakras['anahatha'],
+                                                vishuddha=chakras['vishuddha'],
+                                                ajna=chakras['ajna'],
+                                                sahasrara=chakras['sahasrara'],
+                                                average=chakras['average']
+                                                )
+                        db.session.add(compability) 
+                    elif friend.get('bdate') != friend_in_db.bdate:
+                        chakras = chakras_compability(user.bdate, friend['bdate'])
+                        compability_in_db.muladhara=chakras['muladhara']
+                        compability_in_db.swadihshthana=chakras['swadihshthana']
+                        compability_in_db.manipura=chakras['manipura']
+                        compability_in_db.anahatha=chakras['anahatha']
+                        compability_in_db.vishuddha=chakras['vishuddha']
+                        compability_in_db.ajna=chakras['ajna']
+                        compability_in_db.sahasrara=chakras['sahasrara']
+                        compability_in_db.average=chakras['average']
+
                     db.session.commit()
                 else:
                     new_friend = User(id=friend['id'], 
@@ -116,7 +144,14 @@ def create_app():
     def rating(user_id):
         compabilities = Compability.query.filter_by(user_id=user_id).order_by(Compability.average.desc()).all()
         return render_template('rating.html', compabilities=compabilities)    
+
+    @app.route('/rating/<int:user_id>/<int:compability_id>')
+    def info(user_id, compability_id):
+        compability = Compability.query.get(compability_id)
+        return render_template('info.html', compability=compability)    
+
     return app
+
 
 
 

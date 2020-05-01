@@ -1,17 +1,44 @@
-<html>
+<!DOCTYPE html>
+<html lang='ru'>
     <head>
         <title> Lotus </title>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+
+        <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css" integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous">
+        <link rel="stylesheet" href="{{ url_for('static', filename='main.css') }}">
+
     </head>
+
     <body>
-        <table>
-            {% for compability in compabilities %}
-            <tr>
-                <td>{{compability.friend.name}}</td>
-                <td> ...................{{compability.average}}</td>
-            </tr>
-            {% endfor %}
-        </table>
-        
+        <header>
+            <div class="container">
+                <nav class="navbar navbar-expand-lg navbar-light">
+                    <a class="navbar-brand mx-auto" href="http://127.0.0.1:5000/">
+                        <img src="{{ url_for('static', filename='dark_logo.jpg') }}" width="200" height="200">
+                    </a>
+            </div>
+        </header>    
+
+        <div class="container">
+            <div class="row">
+                 <div class="col">
+                    <table class="table rating-table mx-auto">
+                        {% for compability in compabilities %}
+                        <tr style="cursor: pointer;" onclick="window.location.href='http://127.0.0.1:5000/rating/{{compability.user.id}}/{{compability.id}}'; return false">
+                            <td>
+                                <img src="{{compability.friend.photo}}">
+                            </td>
+                            <td>{{compability.friend.name}}</td>
+                            <td>
+                             .........................................   {{compability.average}}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </table>  
+                 </div>
+             </div>
+         </div>
     </body>
 </html>    
 
